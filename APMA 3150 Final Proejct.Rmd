@@ -28,3 +28,36 @@ plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+names(WineAndCheese) <- c(
+  "WineType","GrapeType","WineStyle",
+  "WineNote1","WineNote2","WineNote3","WineNote4",
+  "CheeseType","CheeseFamily","CheeseTexture",
+  "CheeseFlavor1","CheeseFlavor2","CheeseFlavor3","CheeseFlavor4",
+  "ComboType","ComboSymbol","ComboPR","ComboEN"
+)
+
+library(dplyr)
+
+# 1) ensure factors have no unused levels
+df <- WineAndCheese %>%
+  mutate(
+    WineType      = factor(WineType),
+    CheeseTexture = factor(CheeseTexture),
+    CompBin       = as.integer(ComboType == "Complementary")
+  ) %>%
+  droplevels()
+
+# 2) both factors have ≥2 levels
+cat("WineType levels:     ", nlevels(df$WineType), "\n")
+cat("CheeseTexture levels:", nlevels(df$CheeseTexture), "\n")
+
+# 3) additive logistic model
+glm_add <- glm(
+  CompBin ~ WineType + CheeseTexture,
+  family = binomial(link = "logit"),
+  data   = df
+)
+
+# 4) “ANOVA”-style likelihood-ratio tests
+anova(glm_add, test = "Chisq")
